@@ -44,10 +44,9 @@ async function newGrpcConnection(organization) {
     const tlsRootCert = fs.readFileSync(tlsCertPath);
     const tlsCredentials = grpc.credentials.createSsl(tlsRootCert);
 
-    //Complete the gRCP Client connection here 
-    return new grpc.Client(...
-        { 'grpc.ssl_target_name_override': peerHostAlias }
-    );
+    return new grpc.Client(peerEndpoints[organization], tlsCredentials, {
+        'grpc.ssl_target_name_override': peerHostAlias,
+    });
 }
 
 /**
@@ -59,9 +58,8 @@ function newIdentity(organization) {
     // Path to user certificate
     const certPath = path.join(cryptoPath, `${organization}/users/User1@${organization}/msp/signcerts/User1@${organization}-cert.pem`)
     const mspId = orgMspIds[organization];
-    //Retrieve and return credentials here ...
-    // const credentials ... 
-    // return {...}
+    const credentials = fs.readFileSync(certPath);
+    return { mspId, credentials }
 }
 
 /**
@@ -77,8 +75,7 @@ function newSigner(organization) {
     const keyPath = path.resolve(keyDirectoryPath, files[0])
     const privateKeyPem = fs.readFileSync(keyPath)
     const privateKey = crypto.createPrivateKey(privateKeyPem)
-    //Create and return the signing implementation here
-    // ...
+    return signers.newPrivateKeySigner(privateKey)
 }
 
 /**
@@ -94,23 +91,21 @@ async function submitT(organization, channel, chaincode, transactionName, transa
 
     organization = organization.toLowerCase()
 
+    //Establish gRPC connection
     console.log("\nCreating gRPC connection...")
-    //Establish gRPC connection here
-    // const client = ...
+    const client = await newGrpcConnection(organization)
 
     console.log(`Retrieving identity for User1 of ${organization} ...`)
-    //Retrieve User1's identity here
-    // const id = ...
+    //Retrieve User1's identity
+    const id = newIdentity(organization)
+    //Retrieve signing implementation
+    const signer = newSigner(organization)
 
-    //Retrieve signing implementation here
-    //  const signer = ...
-
-    //Complete the gateway connection here ...
+    //Connect gateway
     const gateway = connect({
-        //...,
-        //...,
-        //...,
-
+        client,
+        identity: id,
+        signer: signer,
         // Default timeouts for different gRPC calls
         evaluateOptions: () => {
             return { deadline: Date.now() + 5000 }; // 5 seconds
@@ -128,21 +123,18 @@ async function submitT(organization, channel, chaincode, transactionName, transa
 
     try {
         console.log(`Connecting to ${channel} ...`)
-        //Retrieve the channel here
-        //const network = ...
+        const network = gateway.getNetwork(channel)
 
         console.log(`Getting the ${chaincode} contract ...`)
-        //Retrieve the contract here
-        //const contract = ...
+        const contract = network.getContract(chaincode)
 
         console.log(`Submitting ${transactionName} transaction ...\n`)
 
-        //Submit transaction here
         let resp = null
         if (!transactionParams || transactionParams === '') {
-            //resp = ...
+            resp = await contract.submitTransaction(transactionName)
         } else {
-            //resp = ...
+            resp = await contract.submitTransaction(transactionName, ...transactionParams)
         }
         const resultJson = utf8Decoder.decode(resp);
 
@@ -152,9 +144,7 @@ async function submitT(organization, channel, chaincode, transactionName, transa
         }
         console.log('*** Transaction committed successfully');
 
-
-        //Retrieve chaincode events here ...
-        //const events = ...
+        const events = await network.getChaincodeEvents(chaincode, { startBlock: BigInt(0) });
         try {
             for await (const event of events) {
                 const asset = new TextDecoder().decode(event.payload);
@@ -195,3 +185,4 @@ function submit(organization, channel, chaincode, transactionName, transactionPa
 }
 
 module.exports = { submitT, submit }
+
