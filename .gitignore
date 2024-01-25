@@ -21,6 +21,11 @@ package-lock.json
 .classpath
 .settings
 
+<<<<<<< HEAD
+=======
+# Chaincode solutions
+# lib/
+>>>>>>> 6dfb27d274f9bb33e4a932966a13cebcbc96966f
 
 # override the ignore of all config/ folders
 !full-stack-asset-transfer-guide/infrastructure/sample-network/config
