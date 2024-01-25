@@ -7,6 +7,7 @@ class studentenrollment extends Contract {
             Name: 'Michael Doe',
             Age: 20,
             Course: 'Computer Science',
+            Number: "",
         };
         // Example of how to write to the world state deterministically
         await ctx.stub.putState(student.ID, Buffer.from(JSON.stringify(student)));
@@ -23,6 +24,7 @@ class studentenrollment extends Contract {
             Name: name,
             Age: age,
             Course: course,
+            Number: "",
         };
         const studentBuffer = Buffer.from(JSON.stringify(student));
         ctx.stub.setEvent('EnrollStudent', studentBuffer);
@@ -42,6 +44,7 @@ class studentenrollment extends Contract {
         enrollment.Name = name;
         enrollment.Age = age;
         enrollment.Course = course;
+        enrollment.Number = "";
         const enrollmentBuffer = Buffer.from(JSON.stringify(enrollment));
         ctx.stub.setEvent('UpdateStudent', enrollmentBuffer);
         return ctx.stub.putState(id, enrollmentBuffer);
@@ -64,9 +67,23 @@ class studentenrollment extends Contract {
         const studentJSON = await ctx.stub.getState(id);
         return studentJSON && studentJSON.length > 0;
     }
+
+    // Accept enrollment and provide an Stuedent number
+    async acceptEnrollment(ctx, StudentID, Number) {
+        const submitter = ctx.stub.getCreator().mspid
+        if(!submitter.includes('Agency')) {
+             throw new Error(`Only the University can accept an enrollment`)
+        }
+        const enrollmentBuffer = await ctx.stub.getState(StudentID)
+        const enrollmentString = enrollmentBuffer.toString()
+        const enrollment = JSON.parse(enrollmentString)
+        enrollment.Number = Number
+        await ctx.stub.putState(StudentID, Buffer.from(JSON.stringify(enrollment)))
+        return enrollment
+    }
     
     // GetAllStudents returns all enrolled students found in the world state.
-    async getAllStudents(ctx) {
+    async GetAllStudents(ctx) {
         const allResults = [];
         // Range query with an empty string for startKey and endKey does an open-ended query of all students in the chaincode namespace.
         const iterator = await ctx.stub.getStateByRange('', '');

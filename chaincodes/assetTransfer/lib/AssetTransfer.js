@@ -63,7 +63,7 @@ class AssetTransfer extends Contract {
         if (!exists) {
             throw new Error(`The asset ${id} does not exist`);
         }
-            const asset = await ctx.stub.getState(id);
+        const asset = await ctx.stub.getState(id);
         const assetBuffer = Buffer.from(JSON.stringify(asset));
         ctx.stub.setEvent('DeleteAsset', assetBuffer);
         return ctx.stub.deleteState(id);
