@@ -19,7 +19,7 @@
                     Organization</label>
                 <div class="col-md-7">
                     <input type="text" class="form-control form-control-lg" id="organization"
-                        value="name@unicam.it" required>
+                        value="(org).quotation.com" required>
                 </div>
             </div>
 
@@ -35,7 +35,7 @@
             <div class="form-group mb-3 row">
                 <label for="identity" class="col-md-5 col-form-label">Chaincode</label>
                 <div class="col-md-7">
-                    <input type="text" class="form-control form-control-lg" id="chaincode" value="student enrollment" required>
+                    <input type="text" class="form-control form-control-lg" id="chaincode" value="studentenrollment" required>
                 </div>
             </div>
 
@@ -46,7 +46,7 @@
             <div class="form-group mb-3 row">
                 <label for="txName" class="col-md-5 col-form-label">Enroll Transaction</label>
                 <div class="col-md-7">
-                    <input type="text" class="form-control form-control-lg" id="txName" value="enroll student"
+                    <input type="text" class="form-control form-control-lg" id="txName" value="enrollStudent"
                         required>
                 </div>
             </div>
@@ -103,7 +103,7 @@
 
             var xhr = new XMLHttpRequest()
             // TODO change the url to your own domain
-            xhr.open("POST", "https://laughing-space-palm-tree-699qvp46wwvwcx4x7-3000.app.github.dev/submitTX", true)
+            xhr.open("POST", "https://special-eureka-v6696g6669gwcx4gj-3000.app.github.dev/submitTX", true)
 
             xhr.setRequestHeader('Content-Type', 'application/json')
             xhr.send(JSON.stringify({
