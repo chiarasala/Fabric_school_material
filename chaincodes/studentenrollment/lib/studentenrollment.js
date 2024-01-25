@@ -1,18 +1,18 @@
 const { Contract } = require('fabric-contract-api');
 class studentenrollment extends Contract {
-    
+
     async initLedger(ctx) {
-        const student = {
-            ID: 'student1',
-            Name: 'Michael Doe',
-            Age: 20,
-            Course: 'Computer Science',
-            Number: "",
-        };
-        // Example of how to write to the world state deterministically
-        await ctx.stub.putState(student.ID, Buffer.from(JSON.stringify(student)));
+        // const student = {
+        //     ID: 'student1',
+        //     Name: 'Michael Doe',
+        //     Age: 20,
+        //     Course: 'Computer Science',
+        //     Number: "",
+        // };
+        // // Example of how to write to the world state deterministically
+        // await ctx.stub.putState(student.ID, Buffer.from(JSON.stringify(student)));
     }
-    
+
     // EnrollStudent adds a new student to the world state with given details.
     async enrollStudent(ctx, id, name, age, course) {
         const exists = await this.StudentExists(ctx, id);
@@ -32,7 +32,7 @@ class studentenrollment extends Contract {
         await ctx.stub.putState(id, studentBuffer);
         return JSON.stringify(student);
     }
-    
+
     // UpdateStudent updates an existing enrollment in the world state with provided parameters.
     async updateStudent(ctx, id, name, age, course) {
         const exists = await this.StudentExists(ctx, id);
@@ -61,7 +61,7 @@ class studentenrollment extends Contract {
         ctx.stub.setEvent('DeleteStudent', studentBuffer);
         return ctx.stub.deleteState(id);
     }
-    
+
     // StudentExists returns true when a student with the given ID exists in the world state.
     async StudentExists(ctx, id) {
         const studentJSON = await ctx.stub.getState(id);
@@ -71,8 +71,8 @@ class studentenrollment extends Contract {
     // Accept enrollment and provide an Stuedent number
     async acceptEnrollment(ctx, StudentID, Number) {
         const submitter = ctx.stub.getCreator().mspid
-        if(!submitter.includes('Agency')) {
-             throw new Error(`Only the University can accept an enrollment`)
+        if (!submitter.includes('Agency')) {
+            throw new Error(`Only the University can accept an enrollment`)
         }
         const enrollmentBuffer = await ctx.stub.getState(StudentID)
         const enrollmentString = enrollmentBuffer.toString()
@@ -81,9 +81,32 @@ class studentenrollment extends Contract {
         await ctx.stub.putState(StudentID, Buffer.from(JSON.stringify(enrollment)))
         return enrollment
     }
-    
+
+    // Function for getting back a specific student from the ledger
+    // StudentID: the id of the student to get
+    async getStudent(ctx, StudentID) {
+        const submitter = ctx.stub.getCreator().mspid
+        if (!submitter.includes('Agency')) {
+            throw new Error(`Only the University can accept an enrollment`)
+        }
+        const student = await ctx.stub.getState(StudentID)
+        if (!student || student.length === 0) {
+            throw new Error(`The student ${StudentID} does not exist`)
+        }
+        console.info(`Student key:   ${student.ID}`)
+        console.info(`Student value: ${student}`)
+
+        ctx.stub.setEvent('getstudent', student)
+        return JSON.stringify(student.toString())
+    }
+
+
     // GetAllStudents returns all enrolled students found in the world state.
     async GetAllStudents(ctx) {
+        const submitter = ctx.stub.getCreator().mspid
+        if (!submitter.includes('Agency')) {
+            throw new Error(`Only the University can accept an enrollment`)
+        }
         const allResults = [];
         // Range query with an empty string for startKey and endKey does an open-ended query of all students in the chaincode namespace.
         const iterator = await ctx.stub.getStateByRange('', '');
